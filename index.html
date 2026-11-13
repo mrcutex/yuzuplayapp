@@ -4,148 +4,261 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>YuzuPlay Apps</title>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
     }
   </script>
   <!-- APK Manifest & Icon Parser -->
   <script src="https://unpkg.com/app-info-parser/dist/app-info-parser.min.js"></script>
   <style>
-    body { -webkit-tap-highlight-color: transparent; }
+    body {
+      -webkit-tap-highlight-color: transparent;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    }
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(161, 161, 170, 0.25); border-radius: 9999px; }
   </style>
 </head>
-<body class="bg-zinc-100 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 min-h-screen font-sans transition-colors duration-150">
+<body class="bg-[#F7F7F8] dark:bg-[#09090B] text-zinc-900 dark:text-zinc-100 min-h-screen font-sans antialiased selection:bg-blue-500/20 selection:text-blue-500 transition-colors duration-150">
 
-  <!-- React Native Style Flat AppBar -->
-  <header class="sticky top-0 z-10 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
-    <div class="max-w-xl mx-auto flex justify-between items-center">
-      <div class="flex items-center space-x-2.5">
-        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
-          Y
+  <!-- Sticky Native App Bar -->
+  <header class="sticky top-0 z-20 bg-white/90 dark:bg-[#09090B]/90 backdrop-blur-md border-b border-zinc-200/80 dark:border-zinc-800/80">
+    <div class="max-w-2xl mx-auto px-4 h-14 flex justify-between items-center">
+      
+      <!-- Brand Identity -->
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-[10px] bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 flex items-center justify-center font-bold text-sm tracking-tighter">
+          YP
         </div>
         <div>
-          <h1 class="text-base font-bold leading-tight tracking-tight">YuzuPlay Apps</h1>
-          <p class="text-[11px] text-zinc-500 dark:text-zinc-400">Tap any app to download directly</p>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-[15px] font-bold tracking-tight leading-none">YuzuPlay Apps</h1>
+            <span id="appCountBadge" class="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200/60 dark:border-zinc-700/60">
+              0
+            </span>
+          </div>
+          <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">Official Direct App Repository</p>
         </div>
       </div>
 
+      <!-- Actions -->
       <div class="flex items-center space-x-2">
         <!-- Theme Toggle Button -->
-        <button onclick="toggleTheme()" id="themeBtn" aria-label="Toggle Theme"
-          class="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 active:opacity-70 transition">
-          <!-- Sun Icon (shown in dark mode) -->
-          <svg id="sunIcon" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <button onclick="toggleTheme()" aria-label="Toggle Theme"
+          class="w-9 h-9 rounded-[10px] bg-zinc-100 dark:bg-[#141417] text-zinc-600 dark:text-zinc-300 border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-center active:scale-95 transition">
+          <svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
           </svg>
-          <!-- Moon Icon (shown in light mode) -->
-          <svg id="moonIcon" class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
           </svg>
         </button>
 
         <!-- Admin Upload Trigger -->
         <button onclick="toggleModal()"
-          class="bg-blue-600 active:opacity-75 text-white text-xs font-semibold px-3 py-2 rounded-lg transition">
-          + Upload
+          class="h-9 px-3.5 rounded-[10px] bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-semibold flex items-center space-x-1.5 transition">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+          </svg>
+          <span>Upload</span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Main Container (React Native FlatList Style) -->
-  <main class="max-w-xl mx-auto p-3.5">
-    <!-- Search Bar -->
-    <div class="relative mb-3">
-      <input type="text" id="searchInput" oninput="filterApps()" placeholder="Search apps, version, or uploader..."
-        class="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3.5 py-2.5 text-sm placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-colors" />
+  <!-- Main Content -->
+  <main class="max-w-2xl mx-auto px-4 py-4 space-y-3.5">
+
+    <!-- Search & Filter Bar -->
+    <div class="space-y-2.5">
+      <div class="relative">
+        <svg class="w-4 h-4 text-zinc-400 dark:text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Search apps, version, or uploader..."
+          class="w-full bg-white dark:bg-[#121214] border border-zinc-200/90 dark:border-zinc-800/90 rounded-[11px] pl-10 pr-8 py-2.5 text-xs sm:text-sm placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-colors" />
+        <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-xs">
+          ✕
+        </button>
+      </div>
+
+      <!-- Segmented Sort Pills -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar">
+          <button onclick="setSort('newest')" id="sort-newest"
+            class="sort-pill text-[11px] font-medium px-2.5 py-1 rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 transition">
+            Latest Releases
+          </button>
+          <button onclick="setSort('name')" id="sort-name"
+            class="sort-pill text-[11px] font-medium px-2.5 py-1 rounded-lg bg-white dark:bg-[#121214] text-zinc-600 dark:text-zinc-400 border border-zinc-200/80 dark:border-zinc-800 transition">
+            Name (A-Z)
+          </button>
+          <button onclick="setSort('oldest')" id="sort-oldest"
+            class="sort-pill text-[11px] font-medium px-2.5 py-1 rounded-lg bg-white dark:bg-[#121214] text-zinc-600 dark:text-zinc-400 border border-zinc-200/80 dark:border-zinc-800 transition">
+            Oldest
+          </button>
+        </div>
+
+        <button onclick="loadApps()" title="Refresh List"
+          class="text-[11px] text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 flex items-center space-x-1 px-2 py-1 rounded-md active:opacity-60">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          <span>Sync</span>
+        </button>
+      </div>
     </div>
 
     <!-- RecyclerView / FlatList Container -->
     <div id="recyclerList" class="space-y-2">
-      <div class="text-center text-zinc-500 py-12 text-xs">Loading apps...</div>
+      <!-- Skeleton Loader Initial State -->
+      <div class="animate-pulse space-y-2">
+        <div class="h-[68px] bg-white dark:bg-[#121214] border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-11 h-11 rounded-[10px] bg-zinc-200 dark:bg-zinc-800"></div>
+            <div class="space-y-2">
+              <div class="w-32 h-3.5 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+              <div class="w-44 h-2.5 bg-zinc-100 dark:bg-zinc-800/60 rounded"></div>
+            </div>
+          </div>
+          <div class="w-14 h-7 bg-zinc-200 dark:bg-zinc-800 rounded-lg"></div>
+        </div>
+        <div class="h-[68px] bg-white dark:bg-[#121214] border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-11 h-11 rounded-[10px] bg-zinc-200 dark:bg-zinc-800"></div>
+            <div class="space-y-2">
+              <div class="w-40 h-3.5 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+              <div class="w-36 h-2.5 bg-zinc-100 dark:bg-zinc-800/60 rounded"></div>
+            </div>
+          </div>
+          <div class="w-14 h-7 bg-zinc-200 dark:bg-zinc-800 rounded-lg"></div>
+        </div>
+      </div>
     </div>
+
   </main>
 
-  <!-- Admin Upload Modal -->
-  <div id="uploadModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
-    <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl max-w-md w-full p-4 space-y-3.5">
-      <div class="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-2.5">
-        <h2 class="text-sm font-bold">Upload APK</h2>
-        <button onclick="toggleModal()" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm px-1">✕</button>
+  <!-- Admin Upload Modal (Bottom Sheet on Mobile, Centered Dialog on Desktop) -->
+  <div id="uploadModal" class="fixed inset-0 bg-black/60 backdrop-blur-[2px] hidden items-end sm:items-center justify-center p-0 sm:p-4 z-50">
+    <div class="bg-white dark:bg-[#121214] border-t sm:border border-zinc-200 dark:border-zinc-800 rounded-t-2xl sm:rounded-xl max-w-md w-full p-4 sm:p-5 space-y-4">
+      
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800/80 pb-3">
+        <div class="flex items-center space-x-2">
+          <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+          <h2 class="text-sm font-bold tracking-tight">Publish New APK</h2>
+        </div>
+        <button onclick="toggleModal()" class="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 flex items-center justify-center text-xs">
+          ✕
+        </button>
       </div>
 
-      <form id="uploadForm" class="space-y-3" onsubmit="handleUpload(event)">
+      <form id="uploadForm" class="space-y-3.5" onsubmit="handleUpload(event)">
+        
+        <!-- Custom Flat Dropzone for APK -->
         <div>
-          <label class="text-xs font-medium text-zinc-500 dark:text-zinc-400 block mb-1">APK File</label>
-          <input type="file" id="apkFile" accept=".apk" required onchange="parseApkFile(this)"
-            class="w-full text-xs text-zinc-600 dark:text-zinc-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-zinc-100 dark:file:bg-zinc-800 file:text-blue-600 dark:file:text-blue-400 file:font-medium cursor-pointer" />
+          <input type="file" id="apkFile" accept=".apk" required onchange="parseApkFile(this)" class="hidden" />
+          <label for="apkFile" id="dropzoneLabel"
+            class="flex flex-col items-center justify-center border border-dashed border-zinc-300 dark:border-zinc-700 hover:border-blue-500 dark:hover:border-blue-500 bg-zinc-50/70 dark:bg-[#09090B] rounded-xl p-4 cursor-pointer transition text-center">
+            <div class="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-1.5">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+              </svg>
+            </div>
+            <span id="filePromptText" class="text-xs font-semibold text-zinc-700 dark:text-zinc-200">Tap to choose .apk file</span>
+            <span class="text-[11px] text-zinc-400 mt-0.5">Auto-extracts app name, version & icon</span>
+          </label>
         </div>
 
         <!-- Auto Preview of Extracted Icon & Info -->
-        <div id="apkPreview" class="hidden items-center space-x-3 bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800">
-          <img id="previewIcon" src="" class="w-10 h-10 rounded-lg object-cover border border-zinc-200 dark:border-zinc-800" />
-          <div class="text-xs min-w-0">
-            <div class="font-semibold text-blue-600 dark:text-blue-400">APK Ready</div>
-            <div id="previewPkg" class="text-zinc-500 truncate"></div>
+        <div id="apkPreview" class="hidden items-center justify-between bg-zinc-50 dark:bg-[#09090B] p-2.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800">
+          <div class="flex items-center space-x-3 min-w-0">
+            <img id="previewIcon" src="" class="w-10 h-10 rounded-[9px] object-cover border border-zinc-200 dark:border-zinc-800 shrink-0" />
+            <div class="text-xs min-w-0">
+              <div class="font-semibold text-zinc-800 dark:text-zinc-200 truncate" id="previewFileName">app-release.apk</div>
+              <div id="previewPkg" class="text-[11px] font-mono text-zinc-400 truncate">com.example.app</div>
+            </div>
           </div>
+          <span id="previewSize" class="text-[11px] font-mono px-2 py-0.5 rounded bg-zinc-200/70 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 shrink-0 ml-2">0 MB</span>
         </div>
 
-        <div class="grid grid-cols-2 gap-2.5">
-          <div>
-            <label class="text-xs font-medium text-zinc-500 dark:text-zinc-400 block mb-1">App Name</label>
+        <!-- App Name & Version -->
+        <div class="grid grid-cols-3 gap-2.5">
+          <div class="col-span-2">
+            <label class="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 block mb-1">App Original Name</label>
             <input type="text" id="appName" placeholder="Auto-filled" required
-              class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+              class="w-full bg-zinc-50 dark:bg-[#09090B] border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-blue-500" />
           </div>
           <div>
-            <label class="text-xs font-medium text-zinc-500 dark:text-zinc-400 block mb-1">Version</label>
-            <input type="text" id="appVersion" placeholder="Auto-filled" required
-              class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+            <label class="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 block mb-1">Version</label>
+            <input type="text" id="appVersion" placeholder="1.0.0" required
+              class="w-full font-mono bg-zinc-50 dark:bg-[#09090B] border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-blue-500" />
           </div>
         </div>
 
+        <!-- Uploader Name -->
         <div>
-          <label class="text-xs font-medium text-zinc-500 dark:text-zinc-400 block mb-1">Uploader Name</label>
+          <label class="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 block mb-1">Uploader Name</label>
           <input type="text" id="uploaderName" placeholder="e.g. Ayan" required
-            class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+            class="w-full bg-zinc-50 dark:bg-[#09090B] border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-blue-500" />
         </div>
 
-        <!-- One-Time Admin Key Section -->
+        <!-- One-Time Admin Key Input -->
         <div id="tokenInputWrapper">
-          <label class="text-xs font-medium text-zinc-500 dark:text-zinc-400 block mb-1">Admin Access Key (One-time setup)</label>
-          <input type="password" id="ghToken" placeholder="Enter access token..."
-            class="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+          <label class="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 block mb-1">Admin Access Key (Saved after first use)</label>
+          <input type="password" id="ghToken" placeholder="Enter admin key..."
+            class="w-full font-mono bg-zinc-50 dark:bg-[#09090B] border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-blue-500" />
         </div>
 
-        <div id="savedTokenBadge" class="hidden items-center justify-between bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2">
-          <span class="text-xs text-zinc-600 dark:text-zinc-400">✓ Admin Key Saved</span>
-          <button type="button" onclick="resetSavedToken()" class="text-xs text-blue-600 dark:text-blue-400 font-medium hover:underline">
+        <!-- Saved Token Indicator -->
+        <div id="savedTokenBadge" class="hidden items-center justify-between bg-zinc-50 dark:bg-[#09090B] border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2">
+          <div class="flex items-center space-x-2 text-xs text-zinc-600 dark:text-zinc-400">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span>Admin Key Active</span>
+          </div>
+          <button type="button" onclick="resetSavedToken()" class="text-[11px] text-blue-600 dark:text-blue-400 font-semibold hover:underline">
             Change Key
           </button>
         </div>
 
-        <!-- Upload Progress Bar with Percentage -->
-        <div id="progressContainer" class="hidden space-y-1.5 pt-1">
+        <!-- Upload Progress Bar with Live Percentage -->
+        <div id="progressContainer" class="hidden bg-zinc-50 dark:bg-[#09090B] border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 space-y-2">
           <div class="flex justify-between items-center text-xs">
-            <span id="statusText" class="text-zinc-600 dark:text-zinc-400 font-medium">Uploading...</span>
-            <span id="progressPercent" class="font-mono font-semibold text-blue-600 dark:text-blue-400">0%</span>
+            <span id="statusText" class="text-zinc-600 dark:text-zinc-300 font-medium">Uploading APK...</span>
+            <span id="progressPercent" class="font-mono font-bold text-blue-600 dark:text-blue-400">0%</span>
           </div>
-          <div class="w-full bg-zinc-200 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
+          <div class="w-full bg-zinc-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
             <div id="progressBar" class="bg-blue-600 h-full w-0 transition-all duration-150"></div>
           </div>
         </div>
 
         <button type="submit" id="submitBtn"
-          class="w-full bg-blue-600 active:opacity-80 text-white font-semibold py-2.5 rounded-lg text-sm transition">
-          Publish App
+          class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-semibold py-2.5 rounded-xl text-xs sm:text-sm transition">
+          Publish to YuzuPlay
         </button>
       </form>
     </div>
   </div>
 
   <script>
-    // === REPO CONFIG ===
+    // === REPOSITORY CONFIG ===
     const OWNER  = "mrcutex";
     const REPO   = "yuzuplayapp";
     const BRANCH = "main";
@@ -155,9 +268,10 @@
     const THEME_STORAGE_KEY    = "yuzuplay_theme";
 
     let allApps = [];
+    let currentSort = "newest";
     let extractedIconBase64 = "";
 
-    // === 0. Theme & Saved Credentials Initialization ===
+    // === 0. Initialize App & Theme ===
     function initApp() {
       const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || "dark";
       document.documentElement.classList.toggle("dark", savedTheme === "dark");
@@ -172,8 +286,7 @@
     }
 
     function toggleTheme() {
-      const html = document.documentElement;
-      const isDark = html.classList.toggle("dark");
+      const isDark = document.documentElement.classList.toggle("dark");
       localStorage.setItem(THEME_STORAGE_KEY, isDark ? "dark" : "light");
     }
 
@@ -202,20 +315,21 @@
       syncTokenUI();
     }
 
-    // === 1. Auto-extract Original Name, Version & App Icon from .apk ===
+    // === 1. Parse APK File on Selection ===
     async function parseApkFile(input) {
       const file = input.files[0];
       if (!file) return;
 
-      const progressBox = document.getElementById("progressContainer");
-      const status = document.getElementById("statusText");
-      const percent = document.getElementById("progressPercent");
-      const bar = document.getElementById("progressBar");
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(1) + " MB";
+      document.getElementById("filePromptText").innerText = file.name;
+      document.getElementById("previewFileName").innerText = file.name;
+      document.getElementById("previewSize").innerText = sizeMB;
 
+      const progressBox = document.getElementById("progressContainer");
       progressBox.classList.remove("hidden");
-      status.innerText = "Reading APK manifest...";
-      percent.innerText = "";
-      bar.style.width = "0%";
+      document.getElementById("statusText").innerText = "Parsing APK manifest...";
+      document.getElementById("progressPercent").innerText = "";
+      document.getElementById("progressBar").style.width = "0%";
 
       try {
         const parser = new AppInfoParser(file);
@@ -227,94 +341,157 @@
 
         document.getElementById("appName").value = label || file.name.replace(/\.apk$/i, "");
         document.getElementById("appVersion").value = result.versionName || "1.0";
+        document.getElementById("previewPkg").innerText = result.package || "android.package";
 
         if (result.icon) {
           extractedIconBase64 = result.icon;
           document.getElementById("previewIcon").src = result.icon;
-          document.getElementById("previewPkg").innerText = result.package || "";
-          document.getElementById("apkPreview").classList.remove("hidden");
-          document.getElementById("apkPreview").classList.add("flex");
         }
+        document.getElementById("apkPreview").classList.remove("hidden");
+        document.getElementById("apkPreview").classList.add("flex");
         progressBox.classList.add("hidden");
       } catch (err) {
         document.getElementById("appName").value = file.name.replace(/\.apk$/i, "");
-        status.innerText = "Please verify app name and version.";
+        document.getElementById("statusText").innerText = "Verify app name & version manually.";
       }
     }
 
     // === 2. Load App List ===
     async function loadApps() {
-      const container = document.getElementById("recyclerList");
       try {
         const rawUrl = `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/apps.json?t=${Date.now()}`;
         const res = await fetch(rawUrl);
 
         if (res.status === 404) {
           allApps = [];
-          renderRecyclerView([]);
+          applyFilters();
           return;
         }
         allApps = await res.json();
-        renderRecyclerView(allApps);
+        applyFilters();
       } catch (err) {
-        container.innerHTML = `<div class="text-center text-zinc-500 py-12 text-xs">No apps available yet.</div>`;
+        document.getElementById("recyclerList").innerHTML = `
+          <div class="bg-white dark:bg-[#121214] border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-10 text-center">
+            <p class="text-xs font-medium text-zinc-500">No apps published yet.</p>
+            <p class="text-[11px] text-zinc-400 mt-1">Tap "+ Upload" to publish your first APK.</p>
+          </div>`;
       }
     }
 
-    // === 3. Render React Native Style Flat Cards ===
+    // === 3. Render Modern Flat App Cards ===
     function renderRecyclerView(apps) {
       const container = document.getElementById("recyclerList");
+      document.getElementById("appCountBadge").innerText = allApps.length;
+
       if (!apps || apps.length === 0) {
-        container.innerHTML = `<div class="text-center text-zinc-500 py-12 text-xs">No apps found.</div>`;
+        container.innerHTML = `
+          <div class="bg-white dark:bg-[#121214] border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-10 text-center">
+            <p class="text-xs font-medium text-zinc-500">No matching apps found.</p>
+          </div>`;
         return;
       }
 
+      const now = Date.now();
+
       container.innerHTML = apps.map(app => {
+        const uploadTime = new Date(app.uploadedAt).getTime();
+        const isRecent = (now - uploadTime) < 48 * 3600 * 1000; // Uploaded within 48h
+
         const dateStr = new Date(app.uploadedAt).toLocaleDateString("en-IN", {
           day: "2-digit", month: "short", year: "numeric"
         });
 
         const iconHtml = app.icon
-          ? `<img src="${app.icon}" class="w-11 h-11 rounded-lg object-cover shrink-0 border border-zinc-200 dark:border-zinc-800" />`
-          : `<div class="w-11 h-11 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xs shrink-0">APK</div>`;
+          ? `<img src="${app.icon}" class="w-12 h-12 rounded-[11px] object-cover shrink-0 border border-zinc-200/80 dark:border-zinc-800" />`
+          : `<div class="w-12 h-12 rounded-[11px] bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-500 dark:text-zinc-400 font-mono font-bold text-xs shrink-0">APK</div>`;
+
+        const newBadge = isRecent
+          ? `<span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 shrink-0">NEW</span>`
+          : "";
 
         return `
           <a href="${app.downloadUrl}" download
-             class="flex items-center justify-between bg-white dark:bg-zinc-900 active:opacity-70 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 transition-opacity cursor-pointer">
-            <div class="flex items-center space-x-3 min-w-0">
+             class="group flex items-center justify-between bg-white dark:bg-[#121214] hover:border-zinc-300 dark:hover:border-zinc-700 active:scale-[0.995] active:opacity-80 border border-zinc-200/80 dark:border-zinc-800/90 rounded-xl p-3 transition-all cursor-pointer">
+            
+            <div class="flex items-center space-x-3.5 min-w-0 pr-2">
               ${iconHtml}
               <div class="min-w-0">
                 <div class="flex items-center space-x-1.5">
-                  <h3 class="font-semibold text-sm truncate">${escapeHtml(app.name)}</h3>
-                  <span class="text-[11px] bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 px-1.5 py-0.5 rounded font-mono shrink-0">
+                  <h3 class="font-semibold text-[14px] text-zinc-900 dark:text-zinc-100 truncate">${escapeHtml(app.name)}</h3>
+                  <span class="text-[11px] font-mono font-medium bg-zinc-100 dark:bg-zinc-800/90 text-zinc-600 dark:text-zinc-300 px-1.5 py-0.5 rounded-md border border-zinc-200/60 dark:border-zinc-700/60 shrink-0">
                     v${escapeHtml(app.version)}
                   </span>
+                  ${newBadge}
                 </div>
-                <div class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 flex flex-wrap items-center gap-x-1.5">
-                  <span>${escapeHtml(app.uploader)}</span>
-                  <span>•</span>
+
+                <div class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 flex flex-wrap items-center gap-x-1.5">
+                  <span class="font-medium text-zinc-600 dark:text-zinc-300">${escapeHtml(app.uploader)}</span>
+                  <span class="text-zinc-300 dark:text-zinc-700">•</span>
                   <span>${dateStr}</span>
-                  <span>•</span>
-                  <span>${escapeHtml(app.size)}</span>
+                  ${app.size ? `<span class="text-zinc-300 dark:text-zinc-700">•</span><span class="font-mono text-[10px]">${escapeHtml(app.size)}</span>` : ""}
                 </div>
               </div>
             </div>
 
-            <div class="shrink-0 ml-3 bg-zinc-100 dark:bg-zinc-800 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-lg text-xs font-semibold">
-              Get
+            <!-- Native App Store Style "GET" Button -->
+            <div class="shrink-0 bg-zinc-100 dark:bg-zinc-800/90 group-hover:bg-blue-600 text-blue-600 dark:text-blue-400 group-hover:text-white px-3.5 py-1.5 rounded-full text-xs font-bold tracking-tight transition-colors flex items-center space-x-1">
+              <span>GET</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"></path>
+              </svg>
             </div>
           </a>
         `;
       }).join("");
     }
 
-    // Helper: Convert File to Base64 with Progress
+    // === 4. Search & Sort Filtering ===
+    function setSort(mode) {
+      currentSort = mode;
+      ["newest", "name", "oldest"].forEach(id => {
+        const btn = document.getElementById(`sort-${id}`);
+        if (id === mode) {
+          btn.className = "sort-pill text-[11px] font-medium px-2.5 py-1 rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 transition";
+        } else {
+          btn.className = "sort-pill text-[11px] font-medium px-2.5 py-1 rounded-lg bg-white dark:bg-[#121214] text-zinc-600 dark:text-zinc-400 border border-zinc-200/80 dark:border-zinc-800 transition";
+        }
+      });
+      applyFilters();
+    }
+
+    function clearSearch() {
+      document.getElementById("searchInput").value = "";
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const q = document.getElementById("searchInput").value.trim().toLowerCase();
+      document.getElementById("clearSearchBtn").classList.toggle("hidden", q.length === 0);
+
+      let filtered = allApps.filter(a =>
+        a.name.toLowerCase().includes(q) ||
+        a.uploader.toLowerCase().includes(q) ||
+        a.version.toLowerCase().includes(q)
+      );
+
+      if (currentSort === "newest") {
+        filtered.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+      } else if (currentSort === "oldest") {
+        filtered.sort((a, b) => new Date(a.uploadedAt) - new Date(b.uploadedAt));
+      } else if (currentSort === "name") {
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      renderRecyclerView(filtered);
+    }
+
+    // === 5. Upload Helpers with Real Progress ===
     function fileToBase64(file, onProgress) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onprogress = (e) => {
           if (e.lengthComputable && onProgress) {
-            onProgress(Math.round((e.loaded / e.total) * 15)); // 0% to 15% for reading file
+            onProgress(Math.round((e.loaded / e.total) * 15));
           }
         };
         reader.onload = () => resolve(reader.result.split(",")[1]);
@@ -323,7 +500,6 @@
       });
     }
 
-    // Helper: PUT request with real XMLHttpRequest upload progress
     function putWithProgress(url, token, payloadObj, onUploadProgress) {
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -334,8 +510,7 @@
 
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable && onUploadProgress) {
-            const ratio = e.loaded / e.total;
-            onUploadProgress(ratio);
+            onUploadProgress(e.loaded / e.total);
           }
         };
 
@@ -364,7 +539,7 @@
       if (text) document.getElementById("statusText").innerText = text;
     }
 
-    // === 4. Upload APK & Update List with Live Progress ===
+    // === 6. Handle Upload Submission ===
     async function handleUpload(e) {
       e.preventDefault();
       const file = document.getElementById("apkFile").files[0];
@@ -385,29 +560,28 @@
       btn.innerText = "Uploading...";
 
       try {
-        setProgress(2, "Preparing APK...");
+        setProgress(2, "Reading APK binary...");
         const base64Apk = await fileToBase64(file, (p) => setProgress(p, "Encoding APK..."));
 
         const safeFileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "")}`;
         const apkPath = `apks/${safeFileName}`;
 
-        // Step A: Upload APK binary (15% -> 90% progress)
-        setProgress(15, "Uploading APK...");
+        setProgress(15, "Uploading APK package...");
         await putWithProgress(
           `https://api.github.com/repos/${OWNER}/${REPO}/contents/${apkPath}`,
           token,
           {
-            message: `Add ${name} v${version}`,
+            message: `Publish ${name} v${version}`,
             content: base64Apk,
             branch: BRANCH
           },
           (ratio) => {
             const pct = 15 + Math.round(ratio * 75);
-            setProgress(pct, "Uploading APK...");
+            setProgress(pct, "Uploading APK package...");
           }
         );
 
-        // Save Token & Uploader in localStorage once verified
+        // Persist credentials after verified upload
         localStorage.setItem(TOKEN_STORAGE_KEY, token);
         localStorage.setItem(UPLOADER_STORAGE_KEY, uploader);
         syncTokenUI();
@@ -415,8 +589,7 @@
         const downloadUrl = `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${apkPath}`;
         const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1) + " MB";
 
-        // Step B: Update apps.json (90% -> 100%)
-        setProgress(92, "Updating catalog...");
+        setProgress(92, "Updating app index...");
         let currentApps = [];
         let fileSha = null;
 
@@ -449,7 +622,7 @@
           `https://api.github.com/repos/${OWNER}/${REPO}/contents/apps.json`,
           token,
           {
-            message: `Update catalog for ${name}`,
+            message: `Update index for ${name}`,
             content: updatedJsonBase64,
             ...(fileSha ? { sha: fileSha } : {}),
             branch: BRANCH
@@ -459,15 +632,15 @@
           }
         );
 
-        setProgress(100, "Done!");
-
+        setProgress(100, "Published!");
         allApps = currentApps;
-        renderRecyclerView(allApps);
+        applyFilters();
 
-        // Reset form except saved uploader
+        // Reset modal fields
         document.getElementById("apkFile").value = "";
         document.getElementById("appName").value = "";
         document.getElementById("appVersion").value = "";
+        document.getElementById("filePromptText").innerText = "Tap to choose .apk file";
         document.getElementById("apkPreview").classList.add("hidden");
         document.getElementById("progressContainer").classList.add("hidden");
         extractedIconBase64 = "";
@@ -481,17 +654,8 @@
       } finally {
         btn.disabled = false;
         btn.classList.remove("opacity-60");
-        btn.innerText = "Publish App";
+        btn.innerText = "Publish to YuzuPlay";
       }
-    }
-
-    function filterApps() {
-      const q = document.getElementById("searchInput").value.toLowerCase();
-      renderRecyclerView(allApps.filter(a =>
-        a.name.toLowerCase().includes(q) ||
-        a.uploader.toLowerCase().includes(q) ||
-        a.version.toLowerCase().includes(q)
-      ));
     }
 
     function toggleModal() {
