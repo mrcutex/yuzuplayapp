@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitHub APK Store</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- APK Manifest & Icon Parser -->
+  <script src="https://unpkg.com/app-info-parser/dist/app-info-parser.min.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
+
+  <!-- Top Bar -->
+  <header class="sticky top-0 z-10 bg-slate-900/90 backdrop-blur border-b border-slate-800 px-4 py-3.5">
+    <div class="max-w-2xl mx-auto flex justify-between items-center">
+      <div>
+        <h1 class="text-lg font-bold tracking-tight text-emerald-400">APK Hub</h1>
+        <p class="text-xs text-slate-400">Powered by GitHub • Tap any app to download</p>
+      </div>
+      <button onclick="toggleModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition">
+        + Admin Upload
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container (RecyclerView Style List) -->
+  <main class="max-w-2xl mx-auto p-4">
+    <input type="text" id="searchInput" oninput="filterApps()" placeholder="Search by app name, version, or uploader..."
+      class="w-full mb-4 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500" />
+
+    <!-- RecyclerView Container -->
+    <div id="recyclerList" class="space-y-2.5">
+      <div class="text-center text-slate-500 py-10 text-sm">Loading apps from GitHub...</div>
+    </div>
+  </main>
+
+  <!-- Admin Upload Modal -->
+  <div id="uploadModal" class="fixed inset-0 bg-black/75 hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-base font-bold text-white">Upload APK to GitHub</h2>
+        <button onclick="toggleModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
+      </div>
+
+      <form id="uploadForm" class="space-y-3" onsubmit="handleUpload(event)">
+        <div>
+          <label class="text-xs text-slate-400 block mb-1">Select APK File</label>
+          <input type="file" id="apkFile" accept=".apk" required onchange="parseApkFile(this)"
+            class="w-full text-xs text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-emerald-400 hover:file:bg-slate-700" />
+        </div>
+
+        <!-- Auto Preview of Extracted Icon & Info -->
+        <div id="apkPreview" class="hidden items-center space-x-3 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+          <img id="previewIcon" src="" class="w-10 h-10 rounded-lg object-cover" />
+          <div class="text-xs text-slate-300">
+            <div class="font-semibold text-emerald-400">APK Manifest Parsed!</div>
+            <div id="previewPkg" class="text-slate-500 truncate max-w-[240px]"></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Original App Name</label>
+            <input type="text" id="appName" placeholder="Auto-filled..." required
+              class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Version</label>
+            <input type="text" id="appVersion" placeholder="Auto-filled..." required
+              class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm" />
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs text-slate-400 block mb-1">Uploader Name</label>
+          <input type="text" id="uploaderName" placeholder="e.g. Ayan" required
+            class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm" />
+        </div>
+
+        <div>
+          <label class="text-xs text-slate-400 block mb-1">GitHub Token (Admin Key)</label>
+          <input type="password" id="ghToken" placeholder="github_pat_..." required
+            class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm" />
+        </div>
+
+        <div id="statusText" class="text-xs text-amber-400 hidden"></div>
+
+        <button type="submit" id="submitBtn"
+          class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm transition">
+          Upload to GitHub
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // === SIRF YE 2 CHEEZEIN CHANGE KAREIN ===
+    const GITHUB_OWNER = "mrcutex";
+    const GITHUB_REPO  = "yuzuplayapp";
+    const BRANCH       = "main";
+
+    let allApps = [];
+    let extractedIconBase64 = "";
+
+    // 1. Auto-extract Original Name, Version & App Icon from .apk
+    async function parseApkFile(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const status = document.getElementById("statusText");
+      status.classList.remove("hidden");
+      status.innerText = "Extracting APK Name, Version & Icon...";
+
+      try {
+        const parser = new AppInfoParser(file);
+        const result = await parser.parse();
+
+        const label = Array.isArray(result.application.label)
+          ? result.application.label[0]
+          : result.application.label;
+
+        document.getElementById("appName").value = label || file.name.replace(".apk", "");
+        document.getElementById("appVersion").value = result.versionName || "1.0";
+
+        if (result.icon) {
+          extractedIconBase64 = result.icon;
+          document.getElementById("previewIcon").src = result.icon;
+          document.getElementById("previewPkg").innerText = result.package || "";
+          document.getElementById("apkPreview").classList.remove("hidden");
+          document.getElementById("apkPreview").classList.add("flex");
+        }
+        status.innerText = `Detected: ${label} (v${result.versionName})`;
+      } catch (err) {
+        document.getElementById("appName").value = file.name.replace(".apk", "");
+        status.innerText = "Manifest complex hai, naam aur version verify kar lein.";
+      }
+    }
+
+    // 2. Load App List from GitHub (apps.json in repo)
+    async function loadApps() {
+      const container = document.getElementById("recyclerList");
+      try {
+        // Cache-busting raw fetch so new uploads show immediately
+        const rawUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${BRANCH}/apps.json?t=${Date.now()}`;
+        const res = await fetch(rawUrl);
+
+        if (res.status === 404) {
+          allApps = [];
+          renderRecyclerView([]);
+          return;
+        }
+        allApps = await res.json();
+        renderRecyclerView(allApps);
+      } catch (err) {
+        container.innerHTML = `<div class="text-center text-slate-500 py-10 text-sm">No apps uploaded yet. Upload your first APK!</div>`;
+      }
+    }
+
+    // 3. Render RecyclerView Style Cards
+    function renderRecyclerView(apps) {
+      const container = document.getElementById("recyclerList");
+      if (!apps || apps.length === 0) {
+        container.innerHTML = `<div class="text-center text-slate-500 py-10 text-sm">No apps found.</div>`;
+        return;
+      }
+
+      container.innerHTML = apps.map(app => {
+        const dateStr = new Date(app.uploadedAt).toLocaleDateString("en-IN", {
+          day: "2-digit", month: "short", year: "numeric"
+        });
+
+        const iconHtml = app.icon
+          ? `<img src="${app.icon}" class="w-12 h-12 rounded-xl object-cover shrink-0 border border-slate-800" />`
+          : `<div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-sm shrink-0">APK</div>`;
+
+        return `
+          <a href="${app.downloadUrl}" download
+             class="flex items-center justify-between bg-slate-900 hover:bg-slate-800/90 active:scale-[0.99] border border-slate-800 rounded-xl p-3.5 transition cursor-pointer group">
+            <div class="flex items-center space-x-3.5 min-w-0">
+              ${iconHtml}
+              <div class="min-w-0">
+                <div class="flex items-center space-x-2">
+                  <h3 class="font-semibold text-sm text-white truncate">${escapeHtml(app.name)}</h3>
+                  <span class="text-[11px] bg-slate-800 text-emerald-400 px-2 py-0.5 rounded font-mono shrink-0">
+                    v${escapeHtml(app.version)}
+                  </span>
+                </div>
+                <div class="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-x-2">
+                  <span>By <strong class="text-slate-300">${escapeHtml(app.uploader)}</strong></span>
+                  <span>•</span>
+                  <span>${dateStr}</span>
+                  <span>•</span>
+                  <span class="text-slate-500">${app.size}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="shrink-0 ml-3 bg-slate-800 group-hover:bg-emerald-600 text-slate-300 group-hover:text-white px-3.5 py-2 rounded-lg text-xs font-medium transition">
+              Download
+            </div>
+          </a>
+        `;
+      }).join("");
+    }
+
+    // Helper: Convert File to Base64 for GitHub API
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // 4. Upload APK & Update apps.json directly on GitHub
+    async function handleUpload(e) {
+      e.preventDefault();
+      const file = document.getElementById("apkFile").files[0];
+      const name = document.getElementById("appName").value.trim();
+      const version = document.getElementById("appVersion").value.trim();
+      const uploader = document.getElementById("uploaderName").value.trim();
+      const token = document.getElementById("ghToken").value.trim();
+      const btn = document.getElementById("submitBtn");
+      const status = document.getElementById("statusText");
+
+      btn.disabled = true;
+      btn.innerText = "Uploading to GitHub...";
+      status.classList.remove("hidden");
+
+      try {
+        status.innerText = "1/3 Encoding APK file...";
+        const base64Apk = await fileToBase64(file);
+        const safeFileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "")}`;
+        const apkPath = `apks/${safeFileName}`;
+
+        // Step A: Upload APK binary to apks/ folder in Repo
+        status.innerText = "2/3 Uploading APK to GitHub Storage...";
+        const uploadRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${apkPath}`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Accept": "application/vnd.github+json",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: `Upload ${name} v${version} by ${uploader}`,
+            content: base64Apk,
+            branch: BRANCH
+          })
+        });
+
+        if (!uploadRes.ok) {
+          const errData = await uploadRes.json();
+          throw new Error(errData.message || "APK upload failed");
+        }
+
+        // Direct download URL via GitHub Raw CDN
+        const downloadUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${BRANCH}/${apkPath}`;
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1) + " MB";
+
+        // Step B: Fetch existing apps.json (if exists) to get SHA & list
+        status.innerText = "3/3 Updating App List...";
+        let currentApps = [];
+        let fileSha = null;
+
+        const metaRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/apps.json?ref=${BRANCH}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (metaRes.ok) {
+          const metaJson = await metaRes.json();
+          fileSha = metaJson.sha;
+          const decoded = decodeURIComponent(escape(atob(metaJson.content.replace(/\n/g, ""))));
+          currentApps = JSON.parse(decoded);
+        }
+
+        // Prepend new app on top of RecyclerView
+        const newAppEntry = {
+          id: Date.now().toString(),
+          name,
+          version,
+          uploader,
+          size: fileSizeMB,
+          uploadedAt: new Date().toISOString(),
+          downloadUrl,
+          icon: extractedIconBase64 || ""
+        };
+        currentApps.unshift(newAppEntry);
+
+        const updatedJsonBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(currentApps, null, 2))));
+
+        const updateJsonRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/apps.json`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Accept": "application/vnd.github+json",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: `Update apps.json for ${name}`,
+            content: updatedJsonBase64,
+             ...(fileSha ? { sha: fileSha } : {}),
+            branch: BRANCH
+          })
+        });
+
+        if (!updateJsonRes.ok) throw new Error("Failed to update apps.json");
+
+        // Render immediately in UI
+        allApps = currentApps;
+        renderRecyclerView(allApps);
+        document.getElementById("uploadForm").reset();
+        document.getElementById("apkPreview").classList.add("hidden");
+        extractedIconBase64 = "";
+        status.classList.add("hidden");
+        toggleModal();
+      } catch (err) {
+        alert("Upload Error: " + err.message);
+        status.innerText = "Error: " + err.message;
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Upload to GitHub";
+      }
+    }
+
+    function filterApps() {
+      const q = document.getElementById("searchInput").value.toLowerCase();
+      renderRecyclerView(allApps.filter(a =>
+        a.name.toLowerCase().includes(q) ||
+        a.uploader.toLowerCase().includes(q) ||
+        a.version.toLowerCase().includes(q)
+      ));
+    }
+
+    function toggleModal() {
+      const modal = document.getElementById("uploadModal");
+      modal.classList.toggle("hidden");
+      modal.classList.toggle("flex");
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, m => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+      }[m]));
+    }
+
+    loadApps();
+  </script>
+</body>
+</html>
